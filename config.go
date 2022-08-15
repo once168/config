@@ -298,7 +298,7 @@ func (cfg *Config) Int64(path string) (int64, error) {
 		return int64(n), nil
 	case string:
 		if v, err := strconv.ParseInt(n, 10, 0); err == nil {
-			return int64(v), nil
+			return v, nil
 		} else {
 			return 0, err
 		}
