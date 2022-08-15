@@ -219,6 +219,24 @@ func (cfg *Config) Int(path string) (int, error) {
 		}
 	case int:
 		return n, nil
+	case int8:
+		return int(n), nil
+	case int16:
+		return int(n), nil
+	case int32:
+		return int(n), nil
+	case int64:
+		return int(n), nil
+	case uint:
+		return int(n), nil
+	case uint8:
+		return int(n), nil
+	case uint16:
+		return int(n), nil
+	case uint32:
+		return int(n), nil
+	case uint64:
+		return int(n), nil
 	case string:
 		if v, err := strconv.ParseInt(n, 10, 0); err == nil {
 			return int(v), nil
@@ -232,6 +250,63 @@ func (cfg *Config) Int(path string) (int, error) {
 // UInt returns an int according to a dotted path or default value or 0.
 func (c *Config) UInt(path string, defaults ...int) int {
 	value, err := c.Int(path)
+
+	if err == nil {
+		return value
+	}
+
+	for _, def := range defaults {
+		return def
+	}
+	return 0
+}
+
+// Int returns an int according to a dotted path.
+func (cfg *Config) Int64(path string) (int64, error) {
+	n, err := Get(cfg.Root, path)
+	if err != nil {
+		return 0, err
+	}
+	switch n := n.(type) {
+	case float64:
+		// encoding/json unmarshals numbers into floats, so we compare
+		// the string representation to see if we can return an int.
+		if i := int64(n); fmt.Sprint(i) == fmt.Sprint(n) {
+			return i, nil
+		} else {
+			return 0, fmt.Errorf("Value can't be converted to int: %v", n)
+		}
+	case int:
+		return int64(n), nil
+	case int8:
+		return int64(n), nil
+	case int16:
+		return int64(n), nil
+	case int32:
+		return int64(n), nil
+	case int64:
+		return int64(n), nil
+	case uint:
+		return int64(n), nil
+	case uint8:
+		return int64(n), nil
+	case uint16:
+		return int64(n), nil
+	case uint32:
+		return int64(n), nil
+	case uint64:
+		return int64(n), nil
+	case string:
+		if v, err := strconv.ParseInt(n, 10, 0); err == nil {
+			return int64(v), nil
+		} else {
+			return 0, err
+		}
+	}
+	return 0, typeMismatch("float64, int or string", n)
+}
+func (c *Config) UInt64(path string, defaults ...int64) int64 {
+	value, err := c.Int64(path)
 
 	if err == nil {
 		return value
@@ -476,7 +551,10 @@ func Set(cfg interface{}, path string, value interface{}) error {
 			if i, error := strconv.ParseInt(part, 10, 0); error == nil {
 				// 1. normalize slice capacity
 				if int(i) >= cap(c) {
-					c = append(c, make([]interface{}, int(i)-cap(c)+1, int(i)-cap(c)+1)...)
+					c = append(c, make([]interface{}, int(i)-len(c)+1, int(i)-len(c)+1)...)
+					tmpath := strings.Join(parts[:pos], `.`)
+					Set(cfg, tmpath, c)
+					*point = c
 				}
 
 				// 2. set value or go further

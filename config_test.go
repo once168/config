@@ -5,6 +5,7 @@
 package config
 
 import (
+	"math"
 	"os"
 	"reflect"
 	"testing"
@@ -538,4 +539,49 @@ func expect(t *testing.T, a interface{}, b interface{}) {
 	if a != b {
 		t.Errorf("Expected %v (type %v) - Got %v (type %v)", b, reflect.TypeOf(b), a, reflect.TypeOf(a))
 	}
+}
+func Test_ArraySet(t *testing.T) {
+	cfg, err := ParseJson(`{}`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cfg.Set(`a.0`, 1)
+	cfg.Set(`a.1`, 2)
+	cfg.Set(`a.2`, 3)
+	cfg.Set(`a.10`, 10)
+	cfg.Set(`b.a`, `a`)
+	cfg.Set(`b.b`, `b`)
+	// UString
+	expect(t, cfg.UInt("a.0"), 1)
+	expect(t, cfg.UInt("a.1"), 2)
+	expect(t, cfg.UInt("a.2"), 3)
+	expect(t, cfg.UInt("a.10"), 10)
+	expect(t, cfg.UString("b.a"), `a`)
+	expect(t, cfg.UString("b.b"), `b`)
+
+}
+func Test_Int64(t *testing.T) {
+	cfg, err := ParseJson(`{}`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cfg.Set(`a`, uint64(1))
+	cfg.Set(`b`, 2)
+	cfg.Set(`c`, -3)
+	cfg.Set(`d`, math.MaxInt64)
+	//math.Max
+	//INT_MAX
+	cfg.Set(`e`, int64(-5))
+	cfg.Set(`f`, uint64(math.MaxUint64))
+
+	// UString
+	expect(t, cfg.UInt64("a"), int64(1))
+	expect(t, cfg.UInt64("b"), int64(2))
+	expect(t, cfg.UInt64("c"), int64(-3))
+	expect(t, cfg.UInt64("d"), int64(math.MaxInt64))
+	expect(t, cfg.UInt("e"), -5)
+	expect(t, uint64(cfg.UInt64("f")), uint64(math.MaxUint64))
+
 }
